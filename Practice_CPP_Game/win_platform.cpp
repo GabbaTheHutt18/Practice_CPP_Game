@@ -13,6 +13,7 @@ global_variable Render_State render_state;
 
 #include "PlatformCommon.cpp"
 #include"Renderer.cpp"
+#include"Game.cpp"
 
 LRESULT CALLBACK window_callback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	LRESULT result;
@@ -65,6 +66,16 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	
 	Input input = {};
 
+	float delta_time = 0.016666f;
+	LARGE_INTEGER frame_begin_time;
+	QueryPerformanceCounter(&frame_begin_time);
+
+	float performance_frequency;{
+		LARGE_INTEGER perf;
+		QueryPerformanceFrequency(&perf);
+		performance_frequency = (float)perf.QuadPart;
+	}
+
 	while (running) {
 		MSG message;
 
@@ -80,13 +91,18 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 			{}
 			case WM_KEYDOWN:
 			{ 
+#define process_button(b,vk)\
+case vk:{\
+input.buttons[b].is_down = is_down;\
+input.buttons[b].changed = true;\
+} break;
 				u32 vk_code = (u32)message.wParam;
 				bool is_down = ((message.lParam & (1 << 31)) == 0);
 				switch (vk_code) {
-				case VK_UP: {
-					input.buttons[BUTTON_UP].is_down = is_down;
-					input.buttons[BUTTON_UP].changed = true;
-				}
+					process_button(BUTTON_UP, VK_UP);
+					process_button(BUTTON_DOWN, VK_DOWN);
+					process_button(BUTTON_LEFT, VK_LEFT);
+					process_button(BUTTON_RIGHT, VK_RIGHT);
 				}
 			}
 				default: {
@@ -98,15 +114,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 			
 		}
 
-		clear_screen(0xff5500);
-		if (input.buttons[BUTTON_UP].is_down)
-		{
-			draw_rect(0, 0, 20, 20, 0x00ff22);
-		}
-		
+		simulate_game(&input, delta_time);
 
 		StretchDIBits(hdc, 0, 0, render_state.width, render_state.height,0,0, render_state.width, render_state.height,render_state.memory, &render_state.bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
 	
+		LARGE_INTEGER frame_end_time;
+		QueryPerformanceCounter(&frame_end_time);
+		delta_time = (float)((frame_end_time.QuadPart) - (frame_begin_time.QuadPart))/ performance_frequency;
+		frame_begin_time = frame_end_time;
 	}
 
 }
