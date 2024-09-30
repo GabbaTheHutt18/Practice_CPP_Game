@@ -93,8 +93,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 			{ 
 #define process_button(b,vk)\
 case vk:{\
+input.buttons[b].changed = is_down != input.buttons[b].is_down;\
 input.buttons[b].is_down = is_down;\
-input.buttons[b].changed = true;\
 } break;
 				u32 vk_code = (u32)message.wParam;
 				bool is_down = ((message.lParam & (1 << 31)) == 0);
